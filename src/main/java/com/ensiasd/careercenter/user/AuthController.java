@@ -10,18 +10,15 @@ import com.ensiasd.careercenter.security.JwtService;
 @RestController
 @RequestMapping("/auth")
 
-
 public class AuthController {
 
     private final UserService userService;
     private final JwtService jwtService;
 
-
     public AuthController(UserService userService, JwtService jwtService) {
         this.userService = userService;
         this.jwtService = jwtService;
     }
-
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
@@ -40,7 +37,6 @@ public class AuthController {
                 null // rôle par défaut = STUDENT
         );
 
-
         // 2️⃣ Générer le token
         String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
 
@@ -54,19 +50,14 @@ public class AuthController {
 
         User user = userService.authenticate(
                 request.getEmail(),
-                request.getPassword()
-        );
+                request.getPassword());
 
         String token = jwtService.generateToken(
                 user.getEmail(),
-                user.getRole().name()
-        );
+                user.getRole().name());
 
         return ResponseEntity.ok(
-                new LoginResponse(token, user.getRole().name(), user.getEmail())
-        );
+                new LoginResponse(token, user.getRole().name(), user.getEmail()));
     }
-
-
 
 }

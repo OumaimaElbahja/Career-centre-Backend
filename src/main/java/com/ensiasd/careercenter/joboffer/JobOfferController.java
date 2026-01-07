@@ -27,6 +27,30 @@ public class JobOfferController {
         }
     }
 
+    @PutMapping(path = "/admin/job-offers/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<JobOffer> updateJobOffer(@PathVariable Long id, @ModelAttribute JobOfferRequest request) {
+        try {
+            JobOffer updatedJobOffer = jobOfferService.updateJobOffer(id, request);
+            return ResponseEntity.ok(updatedJobOffer);
+        } catch (IOException e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @DeleteMapping("/admin/job-offers/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteJobOffer(@PathVariable Long id) {
+        try {
+            jobOfferService.deleteJobOffer(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/api/job-offers")
     public ResponseEntity<List<JobOffer>> getAllJobOffers() {
         List<JobOffer> jobOffers = jobOfferService.getAllJobOffers();

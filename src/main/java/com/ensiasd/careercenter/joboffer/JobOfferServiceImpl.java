@@ -46,7 +46,8 @@ public class JobOfferServiceImpl implements JobOfferService {
                 if (!file.isEmpty()) {
                     String originalFilename = file.getOriginalFilename();
                     String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
-                    Path destinationFile = this.rootLocation.resolve(Paths.get(uniqueFilename)).normalize().toAbsolutePath();
+                    Path destinationFile = this.rootLocation.resolve(Paths.get(uniqueFilename)).normalize()
+                            .toAbsolutePath();
 
                     try (InputStream inputStream = file.getInputStream()) {
                         Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
@@ -66,6 +67,52 @@ public class JobOfferServiceImpl implements JobOfferService {
 
         jobOffer.setAttachments(attachments);
         return jobOfferRepository.save(jobOffer);
+    }
+
+    @Override
+    public JobOffer updateJobOffer(Long id, JobOfferRequest request) throws IOException {
+        JobOffer existingJob = jobOfferRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Job offer not found"));
+
+        existingJob.setContent(request.getContent());
+
+        // For simplicity, we'll keep existing attachments and add new ones
+        // In a real app, you might want to delete specific attachments
+        if (request.getFiles() != null && request.getFiles().length > 0) {
+            List<JobOfferAttachment> newAttachments = new ArrayList<>();
+            for (MultipartFile file : request.getFiles()) {
+                if (!file.isEmpty()) {
+                    String originalFilename = file.getOriginalFilename();
+                    String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
+                    Path destinationFile = this.rootLocation.resolve(Paths.get(uniqueFilename)).normalize()
+                            .toAbsolutePath();
+
+                    try (InputStream inputStream = file.getInputStream()) {
+                        Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
+                    }
+
+                    JobOfferAttachment attachment = JobOfferAttachment.builder()
+                            .fileName(originalFilename)
+                            .filePath(uniqueFilename)
+                            .fileSize(file.getSize())
+                            .fileType(file.getContentType())
+                            .jobOffer(existingJob)
+                            .build();
+                    newAttachments.add(attachment);
+                }
+            }
+            existingJob.getAttachments().addAll(newAttachments);
+        }
+
+        return jobOfferRepository.save(existingJob);
+    }
+
+    @Override
+    public void deleteJobOffer(Long id) {
+        if (!jobOfferRepository.existsById(id)) {
+            throw new RuntimeException("Job offer not found");
+        }
+        jobOfferRepository.deleteById(id);
     }
 
     @Override
